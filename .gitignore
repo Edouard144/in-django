@@ -1,0 +1,21 @@
+# Virtual environment (your local packages — never commit this)
+venv/
+env/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+
+# Django secret key and environment variables
+.env
+
+# Database (local SQLite file)
+db.sqlite3
+
+# VS Code settings
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
