@@ -1,0 +1,45 @@
+<!-- This template inherits everything from base.html -->
+<!-- Express/EJS equivalent: <%- include('layout') %> -->
+{% extends 'blog/base.html' %}
+
+<!-- Fill in the title block -->
+{% block title %}All Posts{% endblock %}
+
+<!-- Fill in the content block -->
+{% block content %}
+
+    <h1>All Blog Posts</h1>
+
+    <!-- if/else tag — checks if posts list is not empty -->
+    {% if posts %}
+
+        <!-- for loop tag — loops over the posts list -->
+        <!-- Express/EJS equivalent: <% posts.forEach(post => { %> -->
+        {% for post in posts %}
+
+            <div>
+                <!-- {{ }} double curly braces output a variable -->
+                <!-- Express/EJS equivalent: <%= post.title %> -->
+                <h2>{{ post.title }}</h2>
+                <p>{{ post.content }}</p>
+
+                <!-- url tag generates a URL by its name -->
+                <!-- instead of hardcoding /blog/posts/1/ -->
+                <!-- Express equivalent: using named routes -->
+                <a href="{% url 'post-detail' post.id %}">Read more</a>
+
+                <!-- show published status -->
+                {% if post.is_published %}
+                    <span>Published</span>
+                {% else %}
+                    <span>Draft</span>
+                {% endif %}
+            </div>
+
+        {% endfor %}
+
+    {% else %}
+        <p>No posts yet.</p>
+    {% endif %}
+
+{% endblock %}

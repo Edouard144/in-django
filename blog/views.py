@@ -1,9 +1,10 @@
+import json
 from django.http import HttpResponse, JsonResponse
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.shortcuts import render, get_object_or_404
 from .models import Post
-import json
 
 
 def hello(request):
@@ -11,7 +12,7 @@ def hello(request):
 
 
 def get_post(request, id):
-    post = Post.objects.get(id=id)
+    post = get_object_or_404(Post, id=id)
     return JsonResponse({
         'id': post.id,
         'title': post.title,
@@ -21,7 +22,7 @@ def get_post(request, id):
 
 
 def get_all_posts(request):
-    posts = Post.objects.all()
+    posts = Post.objects.filter(is_published=True).order_by('-created_at')
     posts_list = list(posts.values('id', 'title', 'content', 'is_published'))
     return JsonResponse({'posts': posts_list})
 
@@ -51,6 +52,7 @@ class PostsView(View):
         data = json.loads(request.body)
         post = Post.objects.create(
             title=data['title'],
-            content=data['content']
+            content=data['content'],
+            is_published=data.get('is_published', False)
         )
         return JsonResponse({'id': post.id}, status=201)
