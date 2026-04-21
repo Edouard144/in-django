@@ -1,0 +1,15 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+    <h1>Welcome, {{ user.username }}!</h1>
+    <p>Email: {{ user.email }}</p>
+
+    <form method="POST" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit">Log Out</button>
+    </form>
+
+{% endblock %}

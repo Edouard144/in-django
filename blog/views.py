@@ -4,6 +4,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
 from .models import Post
 from .forms import PostForm
 
@@ -59,6 +60,7 @@ class PostsView(View):
         return JsonResponse({'id': post.id}, status=201)
 
 
+@login_required(login_url='login')
 def create_post(request):
     if request.method == 'GET':
         form = PostForm()
@@ -68,13 +70,16 @@ def create_post(request):
         form = PostForm(request.POST)
 
         if form.is_valid():
-            form.save()
+            post = form.save(commit=False)
+            post.author = request.user
+            post.save()
             return redirect('get-all-posts')
 
         else:
             return render(request, 'blog/create_post.html', {'form': form})
 
 
+@login_required(login_url='login')
 def edit_post(request, id):
     post = get_object_or_404(Post, id=id)
 
@@ -93,6 +98,7 @@ def edit_post(request, id):
             return render(request, 'blog/create_post.html', {'form': form})
 
 
+@login_required(login_url='login')
 def delete_post(request, id):
     post = get_object_or_404(Post, id=id)
 

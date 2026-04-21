@@ -9,7 +9,7 @@
     <!-- date filter — formats the date nicely -->
     <!-- filters use the pipe character | -->
     <!-- Express equivalent: moment(date).format('...') -->
-    <small>Posted on {{ post.created_at|date:"F j, Y" }}</small>
+    <small>By {{ post.author.username }} on {{ post.created_at|date:"F j, Y" }}</small>
 
     <p>{{ post.content }}</p>
 
