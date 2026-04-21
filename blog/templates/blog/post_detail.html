@@ -17,6 +17,8 @@
     <!-- useful for multi-line text content -->
     <p>{{ post.content|linebreaks }}</p>
 
-    <a href="{% url 'get-all-posts' %}">← Back to all posts</a>
+    <a href="{% url 'edit-post' post.id %}">Edit</a>
+    <a href="{% url 'delete-post' post.id %}">Delete</a>
+    <a href="{% url 'get-all-posts' %}">← Back</a>
 
 {% endblock %}

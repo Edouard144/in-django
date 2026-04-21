@@ -3,8 +3,9 @@ from django.http import HttpResponse, JsonResponse
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from .models import Post
+from .forms import PostForm
 
 
 def hello(request):
@@ -56,3 +57,47 @@ class PostsView(View):
             is_published=data.get('is_published', False)
         )
         return JsonResponse({'id': post.id}, status=201)
+
+
+def create_post(request):
+    if request.method == 'GET':
+        form = PostForm()
+        return render(request, 'blog/create_post.html', {'form': form})
+
+    elif request.method == 'POST':
+        form = PostForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            return redirect('get-all-posts')
+
+        else:
+            return render(request, 'blog/create_post.html', {'form': form})
+
+
+def edit_post(request, id):
+    post = get_object_or_404(Post, id=id)
+
+    if request.method == 'GET':
+        form = PostForm(instance=post)
+        return render(request, 'blog/create_post.html', {'form': form})
+
+    elif request.method == 'POST':
+        form = PostForm(request.POST, instance=post)
+
+        if form.is_valid():
+            form.save()
+            return redirect('get-all-posts')
+
+        else:
+            return render(request, 'blog/create_post.html', {'form': form})
+
+
+def delete_post(request, id):
+    post = get_object_or_404(Post, id=id)
+
+    if request.method == 'POST':
+        post.delete()
+        return redirect('get-all-posts')
+
+    return render(request, 'blog/confirm_delete.html', {'post': post})
