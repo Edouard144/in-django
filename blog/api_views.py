@@ -6,36 +6,56 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from .models import Post
 from .serializers import PostSerializer
+import logging
+
+# Create logger for API views
+logger = logging.getLogger('blog')
 
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def api_login(request):
-    username = request.data.get('username')
-    password = request.data.get('password')
+    try:
+        username = request.data.get('username')
+        password = request.data.get('password')
 
-    user = authenticate(username=username, password=password)
+        user = authenticate(username=username, password=password)
 
-    if user:
-        token, created = Token.objects.get_or_create(user=user)
-        return Response({
-            'token': token.key,
-            'username': user.username,
-            'email': user.email
-        })
+        if user:
+            token, created = Token.objects.get_or_create(user=user)
+            logger.info(f"User {username} logged in successfully")
+            return Response({
+                'token': token.key,
+                'username': user.username,
+                'email': user.email
+            })
 
-    return Response(
-        {'error': 'Invalid credentials'},
-        status=status.HTTP_401_UNAUTHORIZED
-    )
+        logger.warning(f"Failed login attempt for username: {username}")
+        return Response(
+            {'error': 'Invalid credentials'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error in api_login: {str(e)}")
+        return Response(
+            {'error': 'Something went wrong'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def api_get_all_posts(request):
-    posts = Post.objects.filter(is_published=True).order_by('-created_at')
-    serializer = PostSerializer(posts, many=True)
-    return Response(serializer.data)
+    try:
+        posts = Post.objects.filter(is_published=True).order_by('-created_at')
+        serializer = PostSerializer(posts, many=True)
+        return Response(serializer.data)
+    except Exception as e:
+        logger.error(f"Unexpected error in api_get_all_posts: {str(e)}")
+        return Response(
+            {'error': 'Something went wrong'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 @api_view(['GET'])
@@ -48,6 +68,12 @@ def api_get_post(request, id):
             {'error': 'Post not found'},
             status=status.HTTP_404_NOT_FOUND
         )
+    except Exception as e:
+        logger.error(f"Unexpected error fetching post {id}: {str(e)}")
+        return Response(
+            {'error': 'Something went wrong'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
     serializer = PostSerializer(post)
     return Response(serializer.data)
@@ -56,11 +82,19 @@ def api_get_post(request, id):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def api_create_post(request):
-    serializer = PostSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save(author=request.user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        serializer = PostSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(author=request.user)
+            logger.info(f"Post created by {request.user.username}: {serializer.data.get('title')}")
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Unexpected error in api_create_post: {str(e)}")
+        return Response(
+            {'error': 'Something went wrong'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 @api_view(['PUT', 'PATCH'])
@@ -70,6 +104,12 @@ def api_update_post(request, id):
         post = Post.objects.get(id=id)
     except Post.DoesNotExist:
         return Response({'error': 'Post not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"Unexpected error fetching post {id} for update: {str(e)}")
+        return Response(
+            {'error': 'Something went wrong'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
     if post.author != request.user:
         return Response(
@@ -77,11 +117,19 @@ def api_update_post(request, id):
             status=status.HTTP_403_FORBIDDEN
         )
 
-    serializer = PostSerializer(post, data=request.data, partial=True)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        serializer = PostSerializer(post, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            logger.info(f"Post {id} updated by {request.user.username}")
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Unexpected error updating post {id}: {str(e)}")
+        return Response(
+            {'error': 'Something went wrong'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 @api_view(['DELETE'])
@@ -91,6 +139,12 @@ def api_delete_post(request, id):
         post = Post.objects.get(id=id)
     except Post.DoesNotExist:
         return Response({'error': 'Post not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"Unexpected error fetching post {id} for delete: {str(e)}")
+        return Response(
+            {'error': 'Something went wrong'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
     if post.author != request.user:
         return Response(
@@ -98,8 +152,16 @@ def api_delete_post(request, id):
             status=status.HTTP_403_FORBIDDEN
         )
 
-    post.delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)
+    try:
+        post.delete()
+        logger.info(f"Post {id} deleted by {request.user.username}")
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    except Exception as e:
+        logger.error(f"Unexpected error deleting post {id}: {str(e)}")
+        return Response(
+            {'error': 'Something went wrong'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 from rest_framework import viewsets

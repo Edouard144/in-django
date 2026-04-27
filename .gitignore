@@ -13,6 +13,9 @@ __pycache__/
 # Database (local SQLite file)
 db.sqlite3
 
+# Debug log file
+debug.log
+
 # VS Code settings
 .vscode/
 
